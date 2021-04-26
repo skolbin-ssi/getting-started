@@ -1,6 +1,6 @@
 # Using Azure RTOS in the Getting started guide
 
-The getting started guide in this repository uses Microsoft Azure RTOS for general operations and for connecting to [Azure IoT Hub](https://azure.microsoft.com/en-us/services/iot-hub). This article explains how the sample code implements Azure RTOS components for devices.
+The getting started guide in this repository uses Microsoft Azure RTOS for general operations and for connecting to [Azure IoT Hub](https://azure.microsoft.com/services/iot-hub). This article explains how the sample code implements Azure RTOS components for devices.
 
 The sample code in the getting started guide uses the following Azure RTOS components:
 
@@ -20,19 +20,22 @@ The getting started guide repository is arranged in the following folder and fil
     |   |--- CPM.cmake
     |
     |--- common/
-    |   |--- azure/
-    |   |   |--- azure_mqtt.c
-    |   |   |--- cert.c
-    |   |   |--- sas_token.c
+    |   |--- azure_iot_mqtt/
+    |   |   |--- azure_iot_mqtt.c
+    |   |--- azure_iot_nx/
+    |   |   |--- azure_iot_nx_client.c
+    |   |--- azure_iot_cert.c
     |   |--- networking.c
+    |   |--- newlib_nano.c
     |   |--- sntp_client.c
     |
     |--- {vendor}/{device}/
         |--- app/
         |   |--- main.c
         |   |--- azure_config.h
-        |   |--- azure_iothub.c
         |   |--- board_init.c
+        |   |--- mqtt.c
+        |   |--- nx_client.c
         |   |--- startup/
         |       |--- startup.s
         |       |--- linker.ld
@@ -50,7 +53,7 @@ The getting started guide repository is arranged in the following folder and fil
 
 ### Toolchain
 
-The *cmake* folder contains the build toolchain files for the project. It contains both a [Cortex-M4](../cmake/arm-gcc-cortex-m4.cmake) and a [Cortex-M7](../cmake/arm-gcc-cortex-m7.cmake) variant which enable the specific Gcc flags for building on the architecture. There is also a base level [arm-gcc-toolchain.cmake](../cmake/arm-gcc-toolchain.cmake) file that defines the specific build tools (arm-none-eabi-*), along with a set of compile and linker flags to optimize the build.
+The *cmake* folder contains the build toolchain files for the project. It contains both a [Cortex-M4](../cmake/arm-gcc-cortex-m4.cmake) and a [Cortex-M7](../cmake/arm-gcc-cortex-m7.cmake) variant which enable the specific Gcc flags for building on the architecture. There is also a base level [arm-gcc-cortex-0toolchain.cmake](../cmake/arm-gcc-cortex-toolchain.cmake) file that defines the specific build tools (arm-none-eabi-*), along with a set of compile and linker flags to optimize the build.
 
 ### Building
 
@@ -103,10 +106,10 @@ The *startup* folder contains three components:
 
 ### Azure_config.h
 
-The *azure_config.h* file contains configuration required to connect the device to IoT Hub. Primarily it  contains the IoT Hub connection information, which you can store in the constants `IOT_HUB_HOSTNAME`, `IOT_DEVICE_ID`, `IOT_PRIMARY_KEY`. The file also contains Wi-Fi configuration details if the device requires a Wi-Fi connection.
+The *azure_config.h* file contains configuration required to connect the device to IoT Hub. Primarily it  contains the IoT Hub connection information, which you can store in the constants `IOT_HUB_HOSTNAME`, `IOT_HUB_DEVICE_ID`, `IOT_DEVICE_SAS_KEY`. The file also contains Wi-Fi configuration details if the device requires a Wi-Fi connection.
 > Note: In a production environment, we recommend that you not store connection details in code files.
 
-### Azure_iothub.c
+### mqtt.c
 
 This file is the primary location for all IoT Hub communication logic. The file starts the MQTT client and registers the following callbacks for the subscribed topics needed for IoT Hub communication:
 
@@ -117,17 +120,21 @@ This file is the primary location for all IoT Hub communication logic. The file 
 |Device twin desired property |Handle device twin desired properties initiated from IoT Hub|
 |Thread entry |Main thread loop. Device telemetry is implemented here on a regular interval|
 
+### nx_client.c
+
+This file is the primary location for all IoT Hub communication logic. The file starts the Azure Iot NX client and registers the following callbacks for the subscribed topics needed for IoT Hub communication
+
 ### Board_init.c
 
 This file is responsible for initializing the different functions of the device. Typically the code sets up the clocks, pins, peripherals, and the debug console which redirects to the virtual serial port.
 
 ## Common Files
 
-### Azure/azure_mqtt.c
+### azure_iot_mqtt/azure_iot_mqtt.c
 
 Communication between the device and Azure IoT Hub is accomplished with the [MQTT](http://mqtt.org) protocol. The Azure RTOS NetX Duo library includes an MQTT client.
 
-The *azure_mqtt.c* file contains the build of the code required to interface with Azure IoT Hub using the Azure RTOS MQTT application. The functions in this file are responsible for:
+The *azure_iot_mqtt.c* file contains the build of the code required to interface with Azure IoT Hub using the Azure RTOS MQTT application. The functions in this file are responsible for:
 
 1. Initializing the MQTT client
 1. Establishing a secure connection using TLS
@@ -136,12 +143,8 @@ The *azure_mqtt.c* file contains the build of the code required to interface wit
     1. Direct methods
     1. Device twin properties
     1. Device twin desired properties
-1. Parsing the MQTT messages and calling the appropriate callback into the applications *azure_iothub.c* function.
+1. Parsing the MQTT messages and calling the appropriate callback into the applications function.
 1. Facilitating publishing messages to IoT Hub via a set of helper functions.
-
-### Azure/sas_token.c
-
-The *sas_token.c* file takes a IoT Hub host name, the device id, and the device's primary SAS key, and generates a SAS token. The SAS token is used to authenticate with your Azure IoT Hub.
 
 ### Networking.c
 

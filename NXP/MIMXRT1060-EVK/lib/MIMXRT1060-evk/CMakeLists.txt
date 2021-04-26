@@ -3,12 +3,11 @@
 
 set(SOURCES
     config/board/board.c
+    config/board/dcd.c
     config/board/clock_config.c
-    config/board/peripherals.c
     config/board/pin_mux.c
 
     src/boards/evkmimxrt1060/xip/evkmimxrt1060_flexspi_nor_config.c
-    src/boards/evkmimxrt1060/xip/evkmimxrt1060_sdram_ini_dcd.c
     src/components/phyksz8081/fsl_phy.c
     src/components/phyksz8081/fsl_phy.h
     src/components/serial_manager/serial_manager.c
@@ -18,6 +17,7 @@ set(SOURCES
     src/devices/MIMXRT1062/drivers/fsl_enet.c
     src/devices/MIMXRT1062/drivers/fsl_gpio.c
     src/devices/MIMXRT1062/drivers/fsl_lpuart.c
+    src/devices/MIMXRT1062/drivers/fsl_tempmon.c
     src/devices/MIMXRT1062/system_MIMXRT1062.c
     src/devices/MIMXRT1062/utilities/debug_console/fsl_debug_console.c
     src/devices/MIMXRT1062/utilities/str/fsl_str.c
@@ -33,13 +33,10 @@ add_library(${TARGET} OBJECT
 target_compile_definitions(${TARGET}
     PUBLIC 
         CPU_MIMXRT1062DVL6A
-        CPU_MIMXRT1052CVL6A_cm7
-        SERIAL_PORT_TYPE_UART=1
-        XIP_BOOT_HEADER_DCD_ENABLE=1
-
-    PRIVATE
         FSL_FEATURE_PHYKSZ8081_USE_RMII50M_MODE
         SKIP_SYSCLK_INIT
+        SERIAL_PORT_TYPE_UART=1
+        XIP_BOOT_HEADER_DCD_ENABLE=1
         XIP_BOOT_HEADER_ENABLE=1
         XIP_EXTERNAL_FLASH=1
 )
